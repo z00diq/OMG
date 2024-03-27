@@ -1,0 +1,24 @@
+
+/.idea/*
+/[Ll]ibrary/*
+/[Ll]ogs/*
+/[Oo]bj/*
+/[Tt]emp/*
+/[Bb]ins
+/[Ss]creenshots
+*.csproj
+*.sln
+*.apk
+*.zip
+*.keystore
+
+.DS_Store
+
+# Firebase remote confis cache
+remote_config_data
+/Assets/Plugins/Android/FirebaseCrashlytics.androidlib/res/values/crashlytics_build_id.xml
+/Assets/GeneratedLocalRepo
+/Assets/Settings/Logger
+/Assets/App/Config/Logger
+/UserSettings/*
+/Assets/App/Config/Remote/Debug/Values
