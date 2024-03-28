@@ -1,49 +1,102 @@
 using App.Scripts.Modules.Grid;
+using App.Scripts.Scenes.SceneMatrix.Features.FigureProvider.Parser;
 using System;
-using System.IO;
-using System.Text.RegularExpressions;
+using System.Linq;
 using UnityEngine;
 
-namespace App.Scripts.Scenes.SceneMatrix.Features.FigureProvider.Parser
+public class ParserFigureDummy : IFigureParser
 {
-    public class ParserFigureDummy : IFigureParser
+    public Grid<bool> ParseFile(string text)
     {
-        public Grid<bool> ParseFile(string text)
+        string[] rawData = text.Split(new char[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+
+        TryParseData(rawData, out int width, out int height, out int[] cells);
+
+        var grid = new Grid<bool>(new Vector2Int(width, height));
+
+        foreach (var cell in cells)
+            grid[cell % width, cell / width] = true;
+
+        CheckCreatedFugureFormat(grid, cells);
+
+        return grid;
+    }
+
+    private bool TryParseData(string[] data, out int width, out int height, out int[] cells)
+    {
+        const int maxLenghtArrayWithCorrectData = 3;
+        const int widthIndex = 0;
+        const int heightIndex = 1;
+        const int cellsIndex = 2;
+
+        if (data.Length != maxLenghtArrayWithCorrectData)
+            throw new ExceptionParseFigure("Файл имеет неправильный формат");
+
+        if (int.TryParse(data[widthIndex], out width) == false ||
+            int.TryParse(data[heightIndex], out height) == false)
+            throw new ExceptionParseFigure("Неверный тип данных для ширины и(или) высоты в исходном файле");
+       
+        cells = CreateNumbersArray(data[cellsIndex]);
+
+        if (Enumerable.SequenceEqual(cells, cells.Distinct()) == false)
+            throw new ExceptionParseFigure("Данные для номеров ячеек содержат повторяющиеся элементы");
+
+        return true;
+    }
+
+    private int[] CreateNumbersArray(string data)
+    {
+        int[] cells;
+        string[] cellsString = data.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        cells = new int[cellsString.Length];
+        int index = 0;
+
+        foreach (var cellString in cellsString)
         {
-            string[] rawData = text.Split(new char[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+            if (int.TryParse(cellString, out int result) == false)
+                throw new ExceptionParseFigure("Неверный тип данных для номера заполненной ячейки");
 
-            rawData = new string[]
-            {"3","3","lihjbgt 5 6 7 ;fogn,fkln 1 0"};
-
-            IsDataCorrectFormat(rawData);
-            if (IsDataCorrectFormat(rawData) == false)
-                return null;
-
-            var grid = new Grid<bool>(new Vector2Int(1, 1));
-            string[] cells = rawData[2].Split(' ');
-
-            foreach (var cell in cells)
-            {
-                int cellValue = int.Parse(cell);
-                grid[cellValue % 1, cellValue / 1] = true;
-            }
-            
-            return grid;            
+            cells[index++] = result;
         }
 
-        private bool IsDataCorrectFormat(string[] data)
+        return cells;
+    }
+
+    private bool CheckCreatedFugureFormat(Grid<bool> figure, int[] cellsNumber)
+    {
+        foreach (int cell in cellsNumber)
         {
-            if (data.Length != 3)
-                throw new ExceptionParseFigure("Файл имеет неправильный формат");
+            int i = cell / figure.Width;
+            int j = cell % figure.Width;
+            int iMinusOne = Math.Clamp(i - 1, 0, figure.Width-1);
+            int iPlusOne = Math.Clamp(i + 1, 0, figure.Width - 1);
+            int jMinusOne = Math.Clamp(j - 1, 0, figure.Height - 1);
+            int jPlusOne = Math.Clamp(j + 1, 0, figure.Height - 1);
 
-            if (int.TryParse(data[0], out int width) == false ||
-                int.TryParse(data[1], out int heght) == false)
-                throw new ExceptionParseFigure("Неверный тип данных для ширины и(или) высоты в исходном файле");
+            bool upperNeighboorExist = false;
+            bool lowerNeighboorExist = false;
+            bool rightNeighboorExist = false;
+            bool leftNeighboorExist = false;
+            bool isNeghboorsCorrect = false;
 
-            if (Regex.IsMatch(data[2], @"(\d+\s?)+") == false)
-                throw new ExceptionParseFigure("Данные о заполеннх клетках имеют неверный формат");
+            if (i != iMinusOne)
+                lowerNeighboorExist = figure[j, iMinusOne];
 
-            return true;
+            if(i != iPlusOne)
+                upperNeighboorExist = figure[j, iPlusOne];
+
+            if (j != jMinusOne)
+                leftNeighboorExist = figure[jMinusOne, i];
+
+            if (j != jPlusOne)
+                rightNeighboorExist = figure[jPlusOne, i];
+
+            isNeghboorsCorrect = lowerNeighboorExist || upperNeighboorExist || leftNeighboorExist || rightNeighboorExist;
+
+            if(isNeghboorsCorrect==false)
+                throw new ExceptionParseFigure("Полученная фигура не соответствует прравилам");
         }
+
+        return true;
     }
 }

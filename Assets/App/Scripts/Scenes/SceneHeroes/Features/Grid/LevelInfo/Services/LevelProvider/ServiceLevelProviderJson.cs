@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using App.Scripts.Scenes.SceneHeroes.Features.Grid.LevelInfo.Serializable;
-using Unity.Plastic.Newtonsoft.Json;
+using Newtonsoft.Json;
 using UnityEngine;
 
 namespace App.Scripts.Scenes.SceneHeroes.Features.Grid.LevelInfo.Services.LevelProvider

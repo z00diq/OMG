@@ -1,0 +1,36 @@
+{
+  "Version": 1,
+  "ProjectMap": {
+    "76e6b0ff-9ba5-a1a8-3bfe-f114b9d32334": {
+      "ProjectGuid": "76e6b0ff-9ba5-a1a8-3bfe-f114b9d32334",
+      "DisplayName": "Modules",
+      "ColorIndex": 0
+    },
+    "f169cb84-a611-76cc-c84f-09577dade5fb": {
+      "ProjectGuid": "f169cb84-a611-76cc-c84f-09577dade5fb",
+      "DisplayName": "SceneHeroes",
+      "ColorIndex": 1
+    },
+    "f6cf4d07-bcd4-7980-b90f-3502ffc0e829": {
+      "ProjectGuid": "f6cf4d07-bcd4-7980-b90f-3502ffc0e829",
+      "DisplayName": "SceneMatrix",
+      "ColorIndex": 2
+    },
+    "f362652a-5ae6-ca46-51e5-d4e188933298": {
+      "ProjectGuid": "f362652a-5ae6-ca46-51e5-d4e188933298",
+      "DisplayName": "Tests",
+      "ColorIndex": 3
+    },
+    "a2fe74e1-b743-11d0-ae1a-00a0c90fffc3": {
+      "ProjectGuid": "a2fe74e1-b743-11d0-ae1a-00a0c90fffc3",
+      "DisplayName": "Прочие файлы",
+      "ColorIndex": -1
+    },
+    "fb1c2fda-cc16-acc1-0196-ae10933876bf": {
+      "ProjectGuid": "fb1c2fda-cc16-acc1-0196-ae10933876bf",
+      "DisplayName": "DOTween.Modules",
+      "ColorIndex": 4
+    }
+  },
+  "NextColorIndex": 5
+}
