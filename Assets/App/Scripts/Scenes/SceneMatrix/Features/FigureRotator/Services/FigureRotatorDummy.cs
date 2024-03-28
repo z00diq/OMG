@@ -7,16 +7,47 @@ namespace App.Scripts.Scenes.SceneMatrix.Features.FigureRotator.Services
     {
         public Grid<bool> RotateFigure(Grid<bool> grid, int rotateCount)
         {
-            var rotated = new Grid<bool>(grid.Size);
+            Vector2Int squareSize = grid.Size;
+            var rotated = grid.Clone();
 
-            for (int i = 0; i < grid.Height; i++)
+            if (squareSize.x < squareSize.y)
+                squareSize.x++;
+            else if(squareSize.y < squareSize.x)
+                squareSize.y++;
+
+            rotated.UpdateMatrix(squareSize);
+
+            int n = rotated.Size.x;
+
+            for (int period = 0; period < n/2; period++)
             {
-                for (int j = 0; j < grid.Width; j++)
+                int first = period;
+                int last = n - 1 - period;
+
+                for (int i = first; i < last; i++)
                 {
-                    rotated[j, i] = Random.value > 0.5f;
+                    //против часовой
+                    bool temp = rotated[first + i, first];
+
+                    rotated[first + i, first] = rotated[first, last - i];
+                    rotated[first, last - i] = rotated[last - i, last];
+                    rotated[last - i, last] = rotated[last, first + i];
+                    rotated[last, first + i] = temp;
+
+
+                    //по часовой
+                    //bool temp = rotated[first + i, first];
+
+                    //rotated[first + i, first] = rotated[last, first+i];
+                    //rotated[last, first + i] = rotated[last-i, last];
+                    //rotated[last - i, last] = rotated[first, last - i];
+                    //rotated[first, last - i] = temp;
                 }
             }
-            
+
+            Vector2Int newSize = new Vector2Int(grid.Size.y, grid.Size.x);
+            rotated.UpdateMatrix(newSize);
+
             return rotated;
         }
     }

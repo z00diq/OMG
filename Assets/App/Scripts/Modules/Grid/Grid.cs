@@ -19,6 +19,24 @@ namespace App.Scripts.Modules.Grid
             UpdateMatrix(size);
         }
 
+        public Grid<T> Clone()
+        {
+            var clone = new Grid<T>(_size);
+            int rowIndex = 0;
+
+            foreach (var row in _matrix)
+            {
+                int columnIndex = 0;
+
+                foreach (var item in row)
+                    clone[columnIndex++, rowIndex] = item;
+
+                rowIndex++;
+            }
+
+            return clone;
+        }
+
         public void UpdateMatrix(Vector2Int size)
         {
             if (_size == size)
