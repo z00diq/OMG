@@ -25,6 +25,7 @@ public class TestCalculator
 
     [Test]
     [TestCase("scenario_0")]
+    [TestCase("scenario_1")]
     public void TestParamsCalculator(string testFileKey)
     {
         var testPath = string.Format(PathTestCase, testFileKey);
