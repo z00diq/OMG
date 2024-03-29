@@ -10,6 +10,8 @@ public class ParserFigureDummy : IFigureParser
     {
         string[] rawData = text.Split(new char[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
 
+        //rawData = new string[]{"3","2","0 1 2 4" };
+
         TryParseData(rawData, out int width, out int height, out int[] cells);
 
         var grid = new Grid<bool>(new Vector2Int(width, height));
@@ -38,8 +40,16 @@ public class ParserFigureDummy : IFigureParser
        
         cells = CreateNumbersArray(data[cellsIndex]);
 
-        if (Enumerable.SequenceEqual(cells, cells.Distinct()) == false)
-            throw new ExceptionParseFigure("Данные для номеров ячеек содержат повторяющиеся элементы");
+        Array.Sort(cells);
+        int pointer = 0;
+
+        for (int i = 1; i < cells.Length; i++)
+        {
+            if (cells[pointer] != cells[i])
+                pointer++;
+            else
+                throw new ExceptionParseFigure("Данные для номеров ячеек содержат повторяющиеся элементы");
+        }
 
         return true;
     }
@@ -68,10 +78,10 @@ public class ParserFigureDummy : IFigureParser
         {
             int i = cell / figure.Width;
             int j = cell % figure.Width;
-            int iMinusOne = Math.Clamp(i - 1, 0, figure.Width-1);
-            int iPlusOne = Math.Clamp(i + 1, 0, figure.Width - 1);
-            int jMinusOne = Math.Clamp(j - 1, 0, figure.Height - 1);
-            int jPlusOne = Math.Clamp(j + 1, 0, figure.Height - 1);
+            int iMinusOne = Math.Clamp(i - 1, 0, figure.Height - 1);
+            int iPlusOne = Math.Clamp(i + 1, 0,  figure.Height - 1);
+            int jMinusOne = Math.Clamp(j - 1, 0, figure.Width - 1);
+            int jPlusOne = Math.Clamp(j + 1, 0, figure.Width - 1);
 
             bool upperNeighboorExist = false;
             bool lowerNeighboorExist = false;
@@ -79,6 +89,7 @@ public class ParserFigureDummy : IFigureParser
             bool leftNeighboorExist = false;
             bool isNeghboorsCorrect = false;
 
+            //chck
             if (i != iMinusOne)
                 lowerNeighboorExist = figure[j, iMinusOne];
 
@@ -87,7 +98,7 @@ public class ParserFigureDummy : IFigureParser
 
             if (j != jMinusOne)
                 leftNeighboorExist = figure[jMinusOne, i];
-
+            //chck
             if (j != jPlusOne)
                 rightNeighboorExist = figure[jPlusOne, i];
 

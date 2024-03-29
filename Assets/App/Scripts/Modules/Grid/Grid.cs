@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
+using App.Scripts.Extensions; 
 
 namespace App.Scripts.Modules.Grid
 {
@@ -19,22 +21,56 @@ namespace App.Scripts.Modules.Grid
             UpdateMatrix(size);
         }
 
-        public Grid<T> Clone()
+        public void Resize()
         {
-            var clone = new Grid<T>(_size);
-            int rowIndex = 0;
+            List<List<T>> changingMatrix = new List<List<T>>();
 
-            foreach (var row in _matrix)
+            changingMatrix.CreateFromArray(_matrix);
+
+            for (int i = 0; i < changingMatrix.Count; i++)
             {
-                int columnIndex = 0;
-
-                foreach (var item in row)
-                    clone[columnIndex++, rowIndex] = item;
-
-                rowIndex++;
+                if (changingMatrix.IsRowEmpty(i))
+                {
+                    changingMatrix.RemoveAt(i);
+                    i--;
+                }
             }
 
-            return clone;
+            for (int i = 0; i < changingMatrix[0].Count; i++)
+            {
+                if (changingMatrix.IsColumnEmpty(i))
+                {
+                    foreach (var item in changingMatrix)
+                        item.RemoveAt(i);
+                }
+            }
+
+            Vector2Int newSize = new Vector2Int(changingMatrix[0].Count,changingMatrix.Count);
+            UpdateMatrix(newSize);
+
+            for (int i = 0; i < _size.y; i++)
+            {
+                for (int j = 0; j <_size.x; j++)
+                {
+                    _matrix[i][j] = changingMatrix[i][j];
+                }
+            }
+        }
+
+        public void Clone(Grid<T> inst)
+        {
+            int x = 0;
+            int y = 0;
+
+            for (int i = 0; i < inst._matrix.Length; i++)
+            {
+                for (int j = 0; j < inst._matrix[i].Length; j++)
+                {
+                    this[x++, y] = inst._matrix[i][j];
+                }
+                x = 0;
+                y++;
+            }
         }
 
         public void UpdateMatrix(Vector2Int size)
@@ -145,6 +181,6 @@ namespace App.Scripts.Modules.Grid
             }
             
             return buffer.ToString();
-        }
+        } 
     }
 }
