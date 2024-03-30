@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace App.Scripts.Scenes.SceneCalculator.Features.Calculator
@@ -9,41 +10,23 @@ namespace App.Scripts.Scenes.SceneCalculator.Features.Calculator
     {
         private const string s_correctKeyPatteren = @"^(?![à-ÿÀ-ß\d]+$)(?!.\d)(?=.[a-z])[a-zA-Z]+$";
         private const string s_correctExpressionPattern = @"^[0-9+\-*/()A-Za-z\s]+$";
-        private const string s_operations = "+ / - *";
 
         private Dictionary<string, string> _expressions = new Dictionary<string, string>();
+        private Dictionary<char, BinaryMathOperation> _operations = new Dictionary<char, BinaryMathOperation>
+        {
+            {'(', new BinaryMathOperation('(',0,null)},
+            {'+', new BinaryMathOperation('+',1,(x,y)=> x+y)},
+            {'-', new BinaryMathOperation('-',1,(x,y)=> x-y)},
+            {'*', new BinaryMathOperation('*',2,(x,y)=> x*y)},
+            {'/', new BinaryMathOperation('/',2,(x,y)=> x/y)},
+        };
+
         private Regex _regex;
 
         public int Execute(string expression)
         {
-            Stack<char> symbols = new Stack<char>();
-            string priorityExpression = string.Empty;
-            Expression calculatable = new Expression();
-
-            foreach (char s in expression)
-            {
-                if(s!=' ')
-                    symbols.Push(s);
-            }
-
-            char nextSymbol = '\0';
-            char previousSymbol = '\0';
-
-            while (symbols.Count > 0)
-            {
-                nextSymbol = symbols.Pop();
-
-                if (int.TryParse(nextSymbol.ToString(), out int value))
-                    calculatable.AddValue(value);
-
-                if (s_operations.Contains(previousSymbol))
-                    calculatable.AddValue(calculatable.Calculate());
-
-                previousSymbol = nextSymbol;
-            }
-
-
-            return calculatable.Calculate();
+            string postfixExpression = Parse(expression);
+            return new MathExpressionExecutor(_operations).Execute(postfixExpression);
         }
 
         public void SetExpression(string expressionKey, string expression)
@@ -71,87 +54,183 @@ namespace App.Scripts.Scenes.SceneCalculator.Features.Calculator
         {
             return Execute(_expressions[expressionKey]);
         }
+
+        private string Parse(string _infixExprs)
+        {
+            string output = string.Empty;
+            Stack<char> operators = new Stack<char>();
+
+            for (int i = 0; i < _infixExprs.Length; i++)
+            {
+                if (Char.IsDigit(_infixExprs[i]))
+                    output += TakeNumber(_infixExprs, ref i);
+
+                else if (_infixExprs[i] == '(')
+                    operators.Push(_infixExprs[i]);
+
+                else if (_infixExprs[i] == ')')
+                    output += TakePriorityOperations(ref operators);
+
+                else if (char.IsLetter(_infixExprs[i]))
+                    output += Get(TakeName(_infixExprs, ref i)).ToString();
+
+                else if (_operations.ContainsKey(_infixExprs[i]))
+                    output += TakeOperations(ref operators, _infixExprs[i]);
+            }
+
+            foreach (var item in operators)
+                output += item;
+
+            return output;
+        }
+
+        private string TakeName(string infixExprs, ref int i)
+        {
+            string attrName = string.Empty;
+            
+            for (int j = i; j < infixExprs.Length; j++)
+            {
+                if (char.IsLetter(infixExprs[j]))
+                {
+                    attrName += infixExprs[i];
+                }
+                else
+                {
+                    i--;
+                    break;
+                }
+            }
+
+            return attrName;
+        }
+
+        private string TakeOperations(ref Stack<char> operators, char currentOperaation)
+        {
+            string output = string.Empty;
+
+            while (operators.Count > 0 && _operations[operators.Peek()].Priority > _operations[currentOperaation].Priority)
+                output += operators.Pop();
+
+            operators.Push(currentOperaation);
+
+            return output;
+        }
+
+        private string TakePriorityOperations(ref Stack<char> operators)
+        {
+            string output = string.Empty;
+
+            while (operators.Peek() != '(')
+                output += operators.Pop();
+
+            operators.Pop();
+
+            return output;
+        }
+
+        private string TakeNumber(string str, ref int i)
+        {
+            char separator = ' ';
+            StringBuilder output = new StringBuilder();
+            int previousIndex = Math.Clamp(i - 1, 0, str.Length - 1);
+            bool isNegative = str[previousIndex] =='-';
+
+            for (int i1 = i; i1 < str.Length; i1++)
+            {
+                if (char.IsDigit(str[i1]))
+                {
+                    output.Append(str[i1]);
+                }
+                else
+                {
+                    output.Append(separator);
+                    i = --i1;
+                    break;
+                }
+            }
+
+            if (isNegative)
+                output.Insert(0, '-');
+
+            return output.ToString();
+        }
     }
 
-    public class Expression
+    struct MathExpressionExecutor
     {
-        private List<int> _values = new List<int>(2);
-        public char Operation { get; set; }
+        private Dictionary<char, BinaryMathOperation> _operations;
 
-        public void AddValue(int value) =>
-            _values.Add(value);
+        public MathExpressionExecutor(Dictionary<char, BinaryMathOperation> operations) 
+        {
+            _operations = operations;
+        }
 
-        public int Calculate()
+        public int Execute(string _postfixExprs) 
         {
             int result = 0;
+            Stack<int> values = new Stack<int>();
 
-            switch (Operation)
+            for (int i = 0; i < _postfixExprs.Length; i++)
             {
-                case '+':
-                    result = Sum();
-                    break;
-                case '-':
-                    result = Substract();
-                    break;
-                case '*':
-                    result = Multiplay();
-                    break;
-                case '/':
-                    result = Divide();
-                    break;
-                default:
-                    throw new ExceptionExecuteExpression("uavn");
+                if (Char.IsDigit(_postfixExprs[i]))
+                {
+                    string value = TakeNumber(_postfixExprs, ref i);
+                    values.Push(int.Parse(value));
+                }
+                else if (_operations.ContainsKey(_postfixExprs[i]))
+                {
+                    if (values.Count == 0)
+                        break;
+
+                    int secondValue = values.Pop();
+                    int firstValue = values.Pop();
+                    result = _operations[_postfixExprs[i]].Operation.Invoke(firstValue, secondValue);
+                    values.Push(result);
+                }
             }
 
             return result;
         }
 
-        private int Divide()
+        private string TakeNumber(string str, ref int i)
         {
-            int result = 0;
+            char separator = ' ';
+            StringBuilder output = new StringBuilder();
+            int previousIndex = Math.Clamp(i - 1, 0, str.Length - 1);
+            bool isNegative = str[previousIndex] == '-';
 
-            foreach (int item in _values)
-                result /= item;
+            for (int i1 = i; i1 < str.Length; i1++)
+            {
+                if (char.IsDigit(str[i1]))
+                {
+                    output.Append(str[i1]);
+                }
+                else
+                {
+                    output.Append(separator);
+                    i = --i1;
+                    break;
+                }
+            }
 
-            _values.Clear();
+            if (isNegative)
+                output.Insert(0, '-');
 
-            return result;
+            return output.ToString();
         }
+    }
 
-        private int Multiplay()
+    struct BinaryMathOperation
+    {
+        public char Symbol { get; private set; }
+        public int Priority { get; private set; }
+        public Func<int,int,int> Operation { get; private set; }
+
+        public BinaryMathOperation(char symbol, int priority, Func<int, int, int> operation)
         {
-            int result = 0;
-
-            foreach (int item in _values)
-                result *= item;
-
-            _values.Clear();
-
-            return result;
-        }
-
-        private int Substract()
-        {
-            int result = 0;
-
-            foreach (int item in _values)
-                result += item;
-
-            _values.Clear();
-
-            return result;
-        }
-
-        private int Sum()
-        {
-            int result = 0;
-
-            foreach (int item in _values)
-                result += item;
-
-            _values.Clear();
-
-            return result;
+            Symbol = symbol;
+            Priority = priority;
+            Operation = operation;
         }
     }
 }

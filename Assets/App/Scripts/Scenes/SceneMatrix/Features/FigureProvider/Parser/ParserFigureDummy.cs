@@ -10,8 +10,6 @@ public class ParserFigureDummy : IFigureParser
     {
         string[] rawData = text.Split(new char[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
 
-        //rawData = new string[]{"3","2","0 1 2 4" };
-
         TryParseData(rawData, out int width, out int height, out int[] cells);
 
         var grid = new Grid<bool>(new Vector2Int(width, height));

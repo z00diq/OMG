@@ -1,12 +1,12 @@
 {
   "expressions" : [
     {
-      "key" : "pisunchiks",
-      "value" : "5 + 14/2"
+      "key" : "speed",
+      "value" : "1"
     },
     {
       "key" : "atack",
-      "value" : "speed + 10"
+      "value" : "(speed + 10) * 5 - 10"
     }, 
     {
       "key" : "damage",
@@ -15,8 +15,8 @@
   ],
   "expected" : [
     {
-      "key": "pisunchiks",
-      "result": 6
+      "key": "damage",
+      "result": -1
     }
   ]
   
