@@ -59,11 +59,12 @@ namespace App.Scripts.Scenes.SceneCalculator.Features.Calculator
         {
             string output = string.Empty;
             Stack<char> operators = new Stack<char>();
+            bool isNegativeNumber=false;
 
             for (int i = 0; i < _infixExprs.Length; i++)
             {
                 if (Char.IsDigit(_infixExprs[i]))
-                    output += TakeNumber(_infixExprs, ref i);
+                    output += TakeNumber(_infixExprs, ref i,ref isNegativeNumber);
 
                 else if (_infixExprs[i] == '(')
                     operators.Push(_infixExprs[i]);
@@ -72,10 +73,13 @@ namespace App.Scripts.Scenes.SceneCalculator.Features.Calculator
                     output += TakePriorityOperations(ref operators);
 
                 else if (char.IsLetter(_infixExprs[i]))
-                    output += Get(TakeName(_infixExprs, ref i)).ToString();
+                    output += Get(TakeName(_infixExprs, ref i)).ToString()+" ";
 
-                else if (_operations.ContainsKey(_infixExprs[i]))
-                    output += TakeOperations(ref operators, _infixExprs[i]);
+                else if (_operations.ContainsKey(_infixExprs[i])) 
+                    if (IsMinusForNegativeDigit(_infixExprs, i))
+                        isNegativeNumber = true;
+                    else
+                        output += TakeOperations(ref operators, _infixExprs[i]);
             }
 
             foreach (var item in operators)
@@ -84,23 +88,45 @@ namespace App.Scripts.Scenes.SceneCalculator.Features.Calculator
             return output;
         }
 
+        private bool IsMinusForNegativeDigit(string infixExprs, int i)
+        {
+            bool isNegative = true;
+
+            if (infixExprs[i]!='-')
+                return false;
+
+            for (int j = i-1; j >=0; j--)
+            {
+                if (char.IsSeparator(infixExprs[j]))
+                    continue;
+
+                if (char.IsDigit(infixExprs[j]))
+                {
+                    isNegative = false;
+                    break;
+                }
+
+                if (_operations.ContainsKey(infixExprs[j]))
+                    break;
+            }
+
+            return isNegative;
+        }
+
         private string TakeName(string infixExprs, ref int i)
         {
             string attrName = string.Empty;
-            
-            for (int j = i; j < infixExprs.Length; j++)
+            int j;
+
+            for (j= i; j < infixExprs.Length; j++)
             {
                 if (char.IsLetter(infixExprs[j]))
-                {
-                    attrName += infixExprs[i];
-                }
+                    attrName += infixExprs[j];
                 else
-                {
-                    i--;
                     break;
-                }
             }
 
+            i = --j;
             return attrName;
         }
 
@@ -128,14 +154,13 @@ namespace App.Scripts.Scenes.SceneCalculator.Features.Calculator
             return output;
         }
 
-        private string TakeNumber(string str, ref int i)
+        private string TakeNumber(string str, ref int i, ref bool isNegative)
         {
             char separator = ' ';
             StringBuilder output = new StringBuilder();
-            int previousIndex = Math.Clamp(i - 1, 0, str.Length - 1);
-            bool isNegative = str[previousIndex] =='-';
+            int i1;
 
-            for (int i1 = i; i1 < str.Length; i1++)
+            for (i1 = i; i1 < str.Length; i1++)
             {
                 if (char.IsDigit(str[i1]))
                 {
@@ -143,16 +168,20 @@ namespace App.Scripts.Scenes.SceneCalculator.Features.Calculator
                 }
                 else
                 {
-                    output.Append(separator);
-                    i = --i1;
+                   
                     break;
                 }
             }
 
+            i = --i1;
+
             if (isNegative)
                 output.Insert(0, '-');
 
-            return output.ToString();
+            isNegative = false;
+
+            string result = output.ToString() + separator;
+            return result;
         }
     }
 
@@ -169,18 +198,22 @@ namespace App.Scripts.Scenes.SceneCalculator.Features.Calculator
         {
             int result = 0;
             Stack<int> values = new Stack<int>();
+            bool isNegative = false;
 
             for (int i = 0; i < _postfixExprs.Length; i++)
             {
                 if (Char.IsDigit(_postfixExprs[i]))
                 {
-                    string value = TakeNumber(_postfixExprs, ref i);
+                    string value = TakeNumber(_postfixExprs, ref i, ref isNegative);
                     values.Push(int.Parse(value));
                 }
                 else if (_operations.ContainsKey(_postfixExprs[i]))
                 {
-                    if (values.Count == 0)
-                        break;
+                    if (IsMinusForNegativeDigit(_postfixExprs, i))
+                    {
+                        isNegative = true;
+                        continue;
+                    }
 
                     int secondValue = values.Pop();
                     int firstValue = values.Pop();
@@ -189,17 +222,16 @@ namespace App.Scripts.Scenes.SceneCalculator.Features.Calculator
                 }
             }
 
-            return result;
+            return values.Pop();
         }
 
-        private string TakeNumber(string str, ref int i)
+        private string TakeNumber(string str, ref int i, ref bool isNegative)
         {
             char separator = ' ';
             StringBuilder output = new StringBuilder();
-            int previousIndex = Math.Clamp(i - 1, 0, str.Length - 1);
-            bool isNegative = str[previousIndex] == '-';
+            int i1;
 
-            for (int i1 = i; i1 < str.Length; i1++)
+            for (i1 = i; i1 < str.Length; i1++)
             {
                 if (char.IsDigit(str[i1]))
                 {
@@ -207,16 +239,48 @@ namespace App.Scripts.Scenes.SceneCalculator.Features.Calculator
                 }
                 else
                 {
-                    output.Append(separator);
-                    i = --i1;
+                   
                     break;
                 }
             }
 
+            i = --i1;
+
             if (isNegative)
                 output.Insert(0, '-');
 
-            return output.ToString();
+            isNegative = false;
+
+            string result = output.ToString() + separator;
+            return result;
+        }
+
+        private bool IsMinusForNegativeDigit(string infixExprs, int i)
+        {
+            bool isNegative = true;
+
+            if (infixExprs[i] != '-')
+                return false;
+
+            for (int j = i-1; j >= 0; j--)
+            {
+                if (char.IsSeparator(infixExprs[j]))
+                    continue;
+
+                if (char.IsDigit(infixExprs[j]))
+                {
+                    isNegative = false;
+                    break;
+                }
+
+                if (_operations.ContainsKey(infixExprs[j]))
+                {
+                    isNegative = false;
+                    break;
+                }
+            }
+
+            return isNegative;
         }
     }
 

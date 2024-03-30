@@ -16,7 +16,7 @@
   "expected" : [
     {
       "key": "damage",
-      "result": -1
+      "result": 16
     }
   ]
   
